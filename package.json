@@ -1,0 +1,20 @@
+{
+  "name": "we-play-backend",
+  "version": "1.0.0",
+  "description": "This the backend project of we-play app",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/index.js"
+  },
+  "keywords": [
+    "play",
+    "backend",
+    "new"
+  ],
+  "author": "Yashrajsinh Gohil",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
