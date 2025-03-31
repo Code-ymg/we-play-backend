@@ -14,6 +14,10 @@ connectionDB()
 });
 
 
+import userRouter from "../src/routes/user.routes.js"
+
+app.use("/api/v1/users", userRouter);
+
 
 /*
 => This is one way to connect to database
