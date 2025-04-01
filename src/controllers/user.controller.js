@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { APIError } from "../utils/APIError.js";
 import { User } from "../models/user.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { uploadCloudianry } from "../utils/cloudinary.js";
 import { APIResponse } from "../utils/APIResponse.js";
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -26,8 +26,8 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new APIError(404, "Avatar path not found!");
     }
 
-    const avatar = await uploadOnCloudinary(avatarLocalPath);
-    const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+    const avatar = await uploadCloudianry(avatarLocalPath);
+    const coverImage = await uploadCloudianry(coverImageLocalPath);
 
     const user = await User.create({
         username: username.toLowerCase(),
@@ -38,13 +38,13 @@ const registerUser = asyncHandler(async (req, res) => {
         coverImage: coverImage?.url || ""
     });
 
-    const userData = User.findById(userData._id).select("-password -refreshToken");
+    const userData = await User.findById(user._id).select("-password -refreshToken");
 
     if(!userData) {
         throw new APIError(500, "Something went wrong from ourside!");
     }
 
-    res.status(201).json(new APIResponse(201, userData, "The data is inserted succesfully!"));
+    return res.status(201).json(new APIResponse(201, userData, "The data is inserted succesfully!"));
 
 });
 
