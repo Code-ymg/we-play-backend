@@ -44,7 +44,7 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new APIError(500, "Something went wrong from ourside!");
     }
 
-    res.status(200).json(new APIResponse(200, userData, "The data is inserted succesfully!"));
+    res.status(201).json(new APIResponse(201, userData, "The data is inserted succesfully!"));
 
 });
 
