@@ -20,7 +20,7 @@ const generateAccessAndRefreshToken = async(userid) => {
     }
 }
 
-const registerUser = asyncHandler(async (req, res) => {
+const registerUser = asyncHandler(async(req, res) => {
     const { username, email, fullname, password } = req.body;
 
     if([username, email, fullname, password].some((fields) => fields?.trim === "")) {
@@ -64,7 +64,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
 });
 
-const loginUser = asyncHandler(async (req, res) => {
+const loginUser = asyncHandler(async(req, res) => {
     const { username, email, password } = req.body;
 
     if(!(username || email)) {
@@ -94,7 +94,7 @@ const loginUser = asyncHandler(async (req, res) => {
         secure: true
     }
 
-    res.status(200)
+    return res.status(200)
     .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
     .json(
@@ -126,7 +126,7 @@ const logoutUser = asyncHandler(async(req, res) => {
         secure: true
     }
 
-    res
+    return res
     .status(200)
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
@@ -209,7 +209,7 @@ const updateCurrentPassword = asyncHandler(async(req, res) => {
     user.password = newPassword;
     user.save({ validateBeforeSave: false });
 
-    res
+    return res
     .status(200)
     .json(
         new APIResponse(
@@ -221,7 +221,7 @@ const updateCurrentPassword = asyncHandler(async(req, res) => {
 });
 
 const getCurrentUser = asyncHandler(async(req, res) => {
-    res
+    return res
     .status(200)
     .json(
         new APIResponse(
@@ -252,7 +252,7 @@ const updateAccountDetails = asyncHandler(async(req, res) => {
         }    
     ).select("-password");
 
-    res
+    return res
     .status(200)
     .json(
         new APIResponse(
@@ -285,7 +285,7 @@ const updateUserAvatar = asyncHandler(async(req, res) => {
         }
     ).select("-password");
 
-    res
+    return res
     .status(200)
     .json(
         new APIResponse(
@@ -295,6 +295,7 @@ const updateUserAvatar = asyncHandler(async(req, res) => {
         )
     )
 });
+
 const updateUserCoverImage = asyncHandler(async(req, res) => {
     const coverImageLocalPath = req.files?.avatar[0]?.path;
 
@@ -316,7 +317,7 @@ const updateUserCoverImage = asyncHandler(async(req, res) => {
         }
     ).select("-password");
 
-    res
+    return res
     .status(200)
     .json(
         new APIResponse(
@@ -325,6 +326,84 @@ const updateUserCoverImage = asyncHandler(async(req, res) => {
             "The cover image is updated succesfully!"
         )
     )
+});
+
+const getUserChannelProfile = asyncHandler(async(req, res) => {
+    const { username } = req.params;
+
+    if(!username?.trim()) {
+        throw new APIError(404, "Please enter username!");
+    }
+
+    const channel = await User.aggregate([
+        {
+            $match: {
+                username: username?.toLowerCase()
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "channel",
+                as: "subscribers"
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subscribedTo"
+            }
+        },
+        {
+            $addFields: {
+                subscriberCount: {
+                    $size: "$subscribers"
+                },
+                subscribedToCount: {
+                    $size: "$subscribedTo"
+                },
+                isSubscribed: {
+                    $cond: {
+                        if: {$in: [req.user._id, "$subscribers.subscriber"]},
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                fullname: 1,
+                username: 1,
+                avatar: 1,
+                coverImage: 1,
+                subscriberCount: 1,
+                subscribedToCount: 1,
+                isSubscribed: 1,
+                email: 1,
+            }
+        }
+    ])
+
+    console.log(channel);
+
+    if(!channel?.length) {
+        throw new APIError(404, "The channel was not found!");
+    }
+
+    return res
+    .status(200)
+    .json(
+        new APIResponse(
+            200,
+            channel[0],
+            "The channel profile is fetched successfully!"
+        )
+    )
+    
 });
 
 export { 
@@ -336,5 +415,6 @@ export {
     getCurrentUser, 
     updateAccountDetails,
     updateUserAvatar,
-    updateUserCoverImage
+    updateUserCoverImage,
+    getUserChannelProfile
 };
