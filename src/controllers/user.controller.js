@@ -1,10 +1,12 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { APIError } from "../utils/APIError.js";
 import { User } from "../models/user.model.js";
-import { uploadCloudianry } from "../utils/cloudinary.js";
+import { deleteFromCloudinary, uploadCloudianry } from "../utils/cloudinary.js";
 import { APIResponse } from "../utils/APIResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import { threadId } from "worker_threads";
+import { log } from "console";
 
 const generateAccessAndRefreshToken = async(userid) => {
     try {
@@ -51,8 +53,8 @@ const registerUser = asyncHandler(async(req, res) => {
         email,
         fullname,
         password,
-        avatar: avatar.url,
-        coverImage: coverImage?.url || ""
+        avatar: avatar.public_id,
+        coverImage: coverImage?.public_id || ""
     });
 
     const userData = await User.findById(user._id).select("-password -refreshToken");
@@ -191,9 +193,11 @@ const refreshAccessToken = asyncHandler(async(req, res) => {
 const updateCurrentPassword = asyncHandler(async(req, res) => {
     const {oldPassword, newPassword} = req.body;
 
-    const isPasswordCorrect = await req.user.isPasswordCorrect(oldPassword);
+    const user = await User.findById(req.user._id);
 
-    if(!isPasswordCorrect) {
+    const isPassword = await user.isPasswordCorrect(oldPassword);
+
+    if(!isPassword) {
         throw new APIError(401, "Old password is incorrect!");
     }
 
@@ -201,7 +205,6 @@ const updateCurrentPassword = asyncHandler(async(req, res) => {
         throw new APIError(401, "Please enter new password!");
     }
 
-    const user = await User.findById(req.user._id);
 
     if(!user) {
         throw new APIError(400, "The user was not found!");
@@ -266,19 +269,23 @@ const updateAccountDetails = asyncHandler(async(req, res) => {
 });
 
 const updateUserAvatar = asyncHandler(async(req, res) => {
-    const avatarLocalPath = req.files?.avatar[0]?.path;
+    const avatarLocalPath = req.file.path;
 
     if(!avatarLocalPath) {
         throw new APIError(404, "Avatar path not found!");
     }
 
-    const avatar = await uploadCloudianry(avatarLocalPath);
+    const user1 = await User.findById(req.user._id);
+
+    await deleteFromCloudinary(user1.avatar);
+    
+    const avatar = await uploadCloudianry(avatarLocalPath);    
 
     const user = await User.findByIdAndUpdate(
         req.user._id,
         {
             $set: {
-                avatar: avatar.url,
+                avatar: avatar.public_id,
             }    
         },
         {
@@ -298,11 +305,14 @@ const updateUserAvatar = asyncHandler(async(req, res) => {
 });
 
 const updateUserCoverImage = asyncHandler(async(req, res) => {
-    const coverImageLocalPath = req.files?.avatar[0]?.path;
+    const coverImageLocalPath = req.file.path;
 
     if(!coverImageLocalPath) {
         throw new APIError(404, "Cover image path not found!");
     }
+
+    const userTemp = await User.findById(req.user._id);
+    await deleteFromCloudinary(userTemp.coverImage);
 
     const coverImage = await uploadCloudianry(coverImageLocalPath);
 
@@ -310,7 +320,7 @@ const updateUserCoverImage = asyncHandler(async(req, res) => {
         req.user._id,
         {
             $set: {
-                coverImage: coverImage.url,
+                coverImage: coverImage.public_id,
             }
         },
         {
@@ -408,10 +418,10 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
 });
 
 const getWatchHistory = asyncHandler(async(req, res) =>{
-    const user = User.aggregate([
+    const user = await User.aggregate([
         {
             $match: {
-                _id: mongoose.Types.ObjectId(req.user._id)
+                _id: new mongoose.Types.ObjectId(req.user._id)
             }
         },
         {
@@ -449,6 +459,12 @@ const getWatchHistory = asyncHandler(async(req, res) =>{
             }
         }
     ]);
+
+    if(!user) {
+        throw new APIError(404, "User was not found!");
+    }
+
+    console.log(user);
 
     return res
     .status(200)

@@ -4,7 +4,7 @@ import { app } from './app.js';
 
 connectionDB()
 .then(() => {
-    app.on("errror", (err) => {
+    app.on("error", (err) => {
         console.log("an error has occured on the server", err);
     })
     app.listen(process.env.PORT,() => {console.log(`Server is running at ${process.env.PORT}`)});

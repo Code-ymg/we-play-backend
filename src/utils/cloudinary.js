@@ -1,6 +1,6 @@
 import {v2 as cloudinary} from "cloudinary";
-import { log } from "console";
 import fs from "fs";
+import { APIError } from "../utils/APIError.js";
 
 cloudinary.config({ 
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
@@ -25,4 +25,12 @@ const uploadCloudianry = async (localFilePath) => {
     }
 };
 
-export {uploadCloudianry};
+const deleteFromCloudinary = async (docId) => {
+    try {
+        await cloudinary.uploader.destroy(docId);
+    } catch (error) {
+        throw new APIError(404, "File was not found!");
+    }
+};
+
+export {uploadCloudianry, deleteFromCloudinary};
