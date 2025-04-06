@@ -5,8 +5,6 @@ import { deleteFromCloudinary, uploadCloudianry } from "../utils/cloudinary.js";
 import { APIResponse } from "../utils/APIResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
-import { threadId } from "worker_threads";
-import { log } from "console";
 
 const generateAccessAndRefreshToken = async(userid) => {
     try {
