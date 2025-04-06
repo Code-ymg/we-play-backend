@@ -275,10 +275,11 @@ const updateUserAvatar = asyncHandler(async(req, res) => {
         throw new APIError(404, "Avatar path not found!");
     }
 
+    //* to delete the old avatar from cloudinary
     const user1 = await User.findById(req.user._id);
-
     await deleteFromCloudinary(user1.avatar);
     
+    //* to upload the new avatar to cloudinary
     const avatar = await uploadCloudianry(avatarLocalPath);    
 
     const user = await User.findByIdAndUpdate(
@@ -311,9 +312,11 @@ const updateUserCoverImage = asyncHandler(async(req, res) => {
         throw new APIError(404, "Cover image path not found!");
     }
 
+    //* to delete the old cover image from cloudinary
     const userTemp = await User.findById(req.user._id);
     await deleteFromCloudinary(userTemp.coverImage);
 
+    //* to upload the new cover image to cloudinary
     const coverImage = await uploadCloudianry(coverImageLocalPath);
 
     const user = await User.findByIdAndUpdate(
