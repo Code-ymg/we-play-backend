@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
-import {Comment} from "../models/comment.model.js";
-import {APIError} from "../utils/APIError.js";
-import {APIResponse} from "../utils/APIResponse.js";
-import {asyncHandler} from "../utils/asyncHandler.js"
+import { Comment } from "../models/comment.model.js";
+import { APIError } from "../utils/APIError.js";
+import { APIResponse } from "../utils/APIResponse.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 const getVideoComments = asyncHandler(async (req, res) => {
     // TODO: get all comments for a video
@@ -37,7 +37,6 @@ const getVideoComments = asyncHandler(async (req, res) => {
         }
     ])
 
-    console.log(comments);
 
     if(!comments) {
         throw new APIError(500, "Something went wrong while fetching comments!");
@@ -84,16 +83,10 @@ const addComment = asyncHandler(async (req, res) => {
         throw new APIError(400, "Please enter a comment!");
     }
 
-    const owner = req.user;
-
-    if(!owner) {
-        throw new APIError(404, "User not found");
-    }
-
     const newComment = await Comment.create({
         content: comment,
-        video: new mongoose.Types.ObjectId(videoId),
-        owner
+        video: videoId,
+        owner: req.user._id
     });
 
     const addedComment = await Comment.findById(newComment._id);
