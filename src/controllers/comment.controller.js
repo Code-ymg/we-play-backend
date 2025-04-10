@@ -67,7 +67,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
                 new APIResponse(
                     200,
                     {
-                        result: result.docs
+                        result
                     },
                     "The comments are fetched successfully!"
                 )
