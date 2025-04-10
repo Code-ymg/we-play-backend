@@ -1,8 +1,8 @@
-import asyncHandler from "../utils/asyncHandler.js";
-import APIResponse from "../utils/APIResponse.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { APIResponse } from "../utils/APIResponse.js";
 
 
-const healthCheck = asyncHandler(async (req, res) => {
+const healthCheck = asyncHandler(async (_, res) => {
     return res
            .status(200)
            .json(
